@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS // TERMINAL</title>
+    <title>NEXUS // LIVE FEED</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,21 +13,17 @@
 
     <style>
         :root {
-            /* Palette Pro Dark Theme */
-            --bg-dark: #0d1117;       /* Fond principal (GitHub Dark style) */
-            --bg-panel: #161b22;      /* Fond des panneaux */
-            --border: #30363d;        /* Bordures subtiles */
-            
+            --bg-dark: #0d1117;
+            --bg-panel: #161b22;
+            --border: #30363d;
             --text-main: #c9d1d9;
             --text-muted: #8b949e;
-            
-            --accent-green: #238636;  /* Vert "Gain" plus pro, moins néon */
+            --accent-green: #238636;
             --accent-green-text: #3fb950;
-            --accent-red: #da3633;    /* Rouge "Perte" mat */
+            --accent-red: #da3633;
             --accent-red-text: #f85149;
             --accent-blue: #58a6ff;
-            
-            --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-ui: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
         }
 
@@ -41,16 +37,15 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            font-size: 13px; /* Taille pro, compacte */
+            font-size: 13px;
         }
 
-        /* --- Custom Scrollbar (Crucial pour le look pro) --- */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        ::-webkit-scrollbar-thumb { background: var(--border); }
 
-        /* --- Header --- */
+        /* Header */
         header {
             height: 48px;
             border-bottom: 1px solid var(--border);
@@ -59,419 +54,339 @@
             align-items: center;
             padding: 0 16px;
             justify-content: space-between;
-            flex-shrink: 0;
         }
-        .brand { font-family: var(--font-mono); font-weight: 700; font-size: 14px; letter-spacing: -0.5px; }
+        .brand { font-family: var(--font-mono); font-weight: 700; font-size: 14px; }
         .brand span { color: var(--accent-blue); }
-        
-        .ticker-tape {
-            display: flex;
-            gap: 20px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-        }
-        .ticker-item span:last-child { margin-left: 5px; }
+        .live-status { display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--font-mono); }
+        .dot { width: 8px; height: 8px; background-color: var(--accent-green-text); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); animation: pulse 2s infinite; }
 
-        /* --- Layout Grid --- */
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Grid Layout */
         .grid-container {
             display: grid;
-            grid-template-columns: 240px 1fr 280px; /* Sidebar, Chart, OrderBook */
-            grid-template-rows: 100px 1fr 180px;    /* KPI, Chart, Logs */
+            grid-template-columns: 240px 1fr 280px;
+            grid-template-rows: 80px 1fr 150px;
             height: calc(100vh - 48px);
             gap: 1px;
-            background-color: var(--border); /* Les lignes de la grille */
+            background-color: var(--border);
         }
 
-        .panel {
-            background-color: var(--bg-dark);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
+        .panel { background-color: var(--bg-dark); display: flex; flex-direction: column; overflow: hidden; }
+        
         .panel-head {
-            height: 32px;
-            padding: 0 12px;
+            height: 30px;
+            padding: 0 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             border-bottom: 1px solid var(--border);
             background-color: var(--bg-panel);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            user-select: none;
         }
 
-        /* --- KPI Top Bar --- */
-        .kpi-section {
-            grid-column: 1 / -1; /* Toute la largeur */
-            grid-row: 1 / 2;
+        /* Metric Box */
+        .metrics-bar {
+            grid-column: 1 / -1;
             display: flex;
             background: var(--bg-dark);
         }
-        .kpi-box {
+        .metric {
             flex: 1;
             border-right: 1px solid var(--border);
-            padding: 15px 20px;
+            padding: 10px 20px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
-        .kpi-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
-        .kpi-val { font-family: var(--font-mono); font-size: 20px; font-weight: 600; }
-        .kpi-sub { font-size: 11px; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .metric-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+        .metric-value { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
+        .flash-up { color: var(--accent-green-text); transition: color 0.3s; }
+        .flash-down { color: var(--accent-red-text); transition: color 0.3s; }
 
-        /* --- Sidebar --- */
+        /* Sidebar */
         .sidebar { grid-row: 2 / -1; grid-column: 1 / 2; }
-        .nav-item {
-            padding: 10px 15px;
+        .market-item {
+            padding: 12px;
             border-bottom: 1px solid var(--border);
             cursor: pointer;
-            transition: background 0.2s;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .nav-item:hover { background-color: var(--bg-panel); }
-        .nav-item.active { border-left: 3px solid var(--accent-blue); background-color: #1c2128; }
-        .nav-name { font-weight: 500; font-size: 12px; }
-        .nav-status { width: 6px; height: 6px; border-radius: 50%; }
-        .status-on { background-color: var(--accent-green-text); box-shadow: 0 0 5px rgba(63,185,80,0.4); }
-        .status-off { background-color: var(--border); }
-
-        /* --- Chart Area --- */
-        .chart-area { grid-row: 2 / 3; grid-column: 2 / 3; }
+        .market-item:hover { background: rgba(255,255,255,0.03); }
+        .market-item.active { border-left: 2px solid var(--accent-blue); background: #1c2128; }
+        
+        /* Chart */
+        .chart-area { grid-row: 2 / 3; grid-column: 2 / 3; position: relative; }
         #tv-chart { width: 100%; height: 100%; }
 
-        /* --- Order Book (Right) --- */
+        /* Orderbook */
         .orderbook { grid-row: 2 / 4; grid-column: 3 / 4; font-family: var(--font-mono); }
-        .ob-header { 
-            display: grid; grid-template-columns: 1fr 1fr 1fr; 
-            padding: 8px 12px; font-size: 10px; color: var(--text-muted);
-            border-bottom: 1px solid var(--border);
-        }
-        .ob-list { overflow-y: auto; flex: 1; }
-        .ob-row {
-            display: grid; grid-template-columns: 1fr 1fr 1fr;
-            padding: 3px 12px;
-            font-size: 11px;
-            cursor: pointer;
-            position: relative; /* Pour la barre de profondeur */
-        }
-        .ob-row:hover { background-color: rgba(255,255,255,0.03); }
-        /* Simulation de profondeur */
-        .depth-bar {
-            position: absolute;
-            top: 0; right: 0; bottom: 0;
-            background-color: rgba(63, 185, 80, 0.1);
-            z-index: 0;
-        }
-        .depth-bar.ask { background-color: rgba(248, 81, 73, 0.1); }
-        .ob-cell { z-index: 1; text-align: right; }
-        .ob-cell:first-child { text-align: left; }
+        .ob-header { display: flex; padding: 5px 10px; font-size: 10px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        .ob-col { flex: 1; text-align: right; }
+        .ob-col:first-child { text-align: left; }
+        .ob-rows { flex: 1; overflow-y: hidden; } /* No scroll, just simple list */
+        .ob-row { display: flex; padding: 2px 10px; font-size: 11px; position: relative; }
+        .depth-bg { position: absolute; top: 0; bottom: 0; right: 0; opacity: 0.15; z-index: 0; transition: width 0.1s; }
+        .depth-ask { background: var(--accent-red-text); }
+        .depth-bid { background: var(--accent-green-text); }
+        .ob-data { position: relative; z-index: 1; flex: 1; text-align: right; }
+        .ob-data:first-child { text-align: left; }
         
-        .color-buy { color: var(--accent-green-text); }
-        .color-sell { color: var(--accent-red-text); }
-
-        /* --- Console/Logs --- */
+        /* Logs */
         .console { grid-row: 3 / 4; grid-column: 2 / 3; font-family: var(--font-mono); }
-        .log-container { overflow-y: auto; padding: 10px; font-size: 11px; line-height: 1.6; }
-        .log-line { display: flex; gap: 10px; opacity: 0.8; }
-        .log-time { color: var(--text-muted); min-width: 70px; }
-        .log-type { color: var(--accent-blue); }
+        .log-feed { padding: 10px; font-size: 11px; overflow-y: auto; height: 100%; color: var(--text-muted); }
+        .log-entry { margin-bottom: 4px; }
+        .log-ts { color: var(--accent-blue); margin-right: 8px; }
 
-        /* Utility Colors */
-        .up { color: var(--accent-green-text); }
-        .down { color: var(--accent-red-text); }
-
-        /* Mobile Responsive */
+        /* Responsive */
         @media (max-width: 900px) {
-            .grid-container {
-                display: flex; flex-direction: column; height: auto;
-            }
+            .grid-container { display: flex; flex-direction: column; height: auto; }
             .chart-area { height: 400px; }
-            .orderbook { height: 300px; border-top: 1px solid var(--border); }
-            .kpi-section { flex-wrap: wrap; }
-            .kpi-box { min-width: 50%; border-bottom: 1px solid var(--border); }
+            .orderbook { height: 300px; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="brand">NEXUS // <span>PRO</span></div>
-        <div class="ticker-tape">
-            <div class="ticker-item">S&P 500 <span class="up">+1.2%</span></div>
-            <div class="ticker-item">BTC <span class="down">-0.4%</span></div>
-            <div class="ticker-item">VIX <span class="down">-2.1%</span></div>
-            <div class="ticker-item" style="color: var(--text-muted);">LATENCY: 14ms</div>
+        <div class="brand">NEXUS // <span>LIVE</span></div>
+        <div class="live-status">
+            <div class="dot"></div>
+            BINANCE WEBSOCKET: CONNECTED
         </div>
     </header>
 
     <div class="grid-container">
-
-        <div class="kpi-section">
-            <div class="kpi-box">
-                <span class="kpi-label">NET LIQUIDATION</span>
-                <span class="kpi-val">$142,590.00</span>
-                <span class="kpi-sub up">+$2,340 (1.6%) Today</span>
+        
+        <div class="metrics-bar">
+            <div class="metric">
+                <span class="metric-label">BTC/USDT PRICE</span>
+                <span class="metric-value" id="price-display">Loading...</span>
             </div>
-            <div class="kpi-box">
-                <span class="kpi-label">MARGIN USAGE</span>
-                <span class="kpi-val">24.5%</span>
-                <span class="kpi-sub" style="color:var(--text-muted)">Healthy</span>
+            <div class="metric">
+                <span class="metric-label">24H CHANGE</span>
+                <span class="metric-value" id="change-display">--</span>
             </div>
-            <div class="kpi-box">
-                <span class="kpi-label">OPEN POSITIONS</span>
-                <span class="kpi-val">4</span>
-                <span class="kpi-sub">Long: 3 | Short: 1</span>
-            </div>
-            <div class="kpi-box">
-                <span class="kpi-label">DAY VOLUME</span>
-                <span class="kpi-val">$2.4M</span>
-                <span class="kpi-sub">High Freq Active</span>
+            <div class="metric">
+                <span class="metric-label">24H VOLUME (BTC)</span>
+                <span class="metric-value" id="vol-display">--</span>
             </div>
         </div>
 
         <div class="panel sidebar">
-            <div class="panel-head">ALGORITHMS</div>
-            <div class="nav-item active">
-                <div>
-                    <div class="nav-name">BTC_SCALP_V4</div>
-                    <div style="font-size:10px; color:var(--text-muted)">Mean Reversion</div>
-                </div>
-                <div class="nav-status status-on"></div>
+            <div class="panel-head">MARKETS</div>
+            <div class="market-item active">
+                <div><b>BTC/USDT</b><div style="font-size:10px; color:#8b949e">Bitcoin Spot</div></div>
             </div>
-            <div class="nav-item">
-                <div>
-                    <div class="nav-name">ETH_ARBITRAGE</div>
-                    <div style="font-size:10px; color:var(--text-muted)">DEX/CEX Spread</div>
-                </div>
-                <div class="nav-status status-on"></div>
-            </div>
-            <div class="nav-item">
-                <div>
-                    <div class="nav-name">GOLD_HEDGE</div>
-                    <div style="font-size:10px; color:var(--text-muted)">Macro Sentiment</div>
-                </div>
-                <div class="nav-status status-off"></div>
+            <div class="market-item" style="opacity: 0.5; cursor: not-allowed;">
+                <div><b>ETH/USDT</b><div style="font-size:10px; color:#8b949e">Locked (Demo)</div></div>
             </div>
         </div>
 
         <div class="panel chart-area">
-            <div class="panel-head">
-                <span>BTC/USD PERPETUAL</span>
-                <span style="font-size:10px; opacity:0.6;">1H TIMEFRAME</span>
-            </div>
+            <div class="panel-head">REAL-TIME CHART (1M Candles)</div>
             <div id="tv-chart"></div>
         </div>
 
-        <div class="panel console">
-            <div class="panel-head">SYSTEM EVENTS</div>
-            <div class="log-container" id="log-feed">
-                </div>
-        </div>
-
         <div class="panel orderbook">
-            <div class="panel-head">ORDER BOOK (L2)</div>
+            <div class="panel-head">ORDER BOOK (DEPTH)</div>
             <div class="ob-header">
-                <span style="text-align:left">PRICE</span>
-                <span style="text-align:right">SIZE</span>
-                <span style="text-align:right">TOTAL</span>
+                <div class="ob-col" style="text-align:left">PRICE</div>
+                <div class="ob-col">SIZE</div>
             </div>
-            <div class="ob-list" id="ob-feed">
-                </div>
+            <div id="asks-container" style="display:flex; flex-direction:column-reverse; overflow:hidden; flex:1;"></div>
+            
+            <div style="border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:5px; text-align:center; font-weight:bold; font-size:12px;" id="spread-display">
+                ---
+            </div>
+            
+            <div id="bids-container" style="overflow:hidden; flex:1;"></div>
         </div>
 
+        <div class="panel console">
+            <div class="panel-head">SYSTEM LOGS</div>
+            <div class="log-feed" id="logs"></div>
+        </div>
     </div>
 
     <script>
-        // --- CONFIGURATION DU GRAPHIQUE ---
+        // --- 1. CONFIGURATION DU CHART ---
         const chartContainer = document.getElementById('tv-chart');
         const chart = LightweightCharts.createChart(chartContainer, {
-            layout: {
-                background: { type: 'solid', color: '#0d1117' }, // Match CSS var
-                textColor: '#8b949e',
-                fontFamily: 'Inter',
-            },
-            grid: {
-                vertLines: { color: '#161b22' },
-                horzLines: { color: '#161b22' },
-            },
-            crosshair: {
-                mode: LightweightCharts.CrosshairMode.Normal,
-            },
-            rightPriceScale: {
-                borderColor: '#30363d',
-                scaleMargins: { top: 0.1, bottom: 0.3 }, // Laisse place au volume
-            },
-            timeScale: {
-                borderColor: '#30363d',
-                timeVisible: true,
-            },
+            layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#8b949e' },
+            grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#30363d' },
+            timeScale: { borderColor: '#30363d', timeVisible: true, secondsVisible: false },
         });
 
-        // 1. Candlestick Series
         const candleSeries = chart.addCandlestickSeries({
-            upColor: '#238636',
-            downColor: '#da3633',
-            borderVisible: false,
-            wickUpColor: '#238636',
-            wickDownColor: '#da3633',
+            upColor: '#238636', downColor: '#da3633',
+            borderVisible: false, wickUpColor: '#238636', wickDownColor: '#da3633',
         });
 
-        // 2. Volume Series (Histogram at bottom)
-        const volumeSeries = chart.addHistogramSeries({
-            color: '#26a69a',
-            priceFormat: { type: 'volume' },
-            priceScaleId: '', // Overlay on same chart
-            scaleMargins: { top: 0.8, bottom: 0 },
-        });
-
-        // 3. Moving Average Line
-        const maSeries = chart.addLineSeries({
-            color: '#58a6ff',
-            lineWidth: 1,
-            crosshairMarkerVisible: false,
-            lastValueVisible: false,
-            priceLineVisible: false,
-        });
-
-        // --- GÉNÉRATION DE DONNÉES FICTIVES "PRO" ---
-        let data = [];
-        let volumeData = [];
-        let maData = [];
-        
-        // Point de départ
-        let time = Math.floor(Date.now() / 1000) - (24 * 60 * 60); // Hier
-        let price = 42500;
-
-        for (let i = 0; i < 500; i++) {
-            // Random Walk plus réaliste
-            let change = (Math.random() - 0.5) * 150; 
-            let open = price;
-            let close = price + change;
-            let high = Math.max(open, close) + Math.random() * 50;
-            let low = Math.min(open, close) - Math.random() * 50;
-            
-            // Couleur Volume
-            let color = close > open ? 'rgba(35, 134, 54, 0.4)' : 'rgba(218, 54, 51, 0.4)';
-            
-            data.push({ time, open, high, low, close });
-            volumeData.push({ time, value: Math.random() * 1000, color });
-            
-            // Simple Moving Average calc
-            if (i > 20) {
-                let sum = 0;
-                for (let k = 0; k < 20; k++) sum += data[i-k].close;
-                maData.push({ time, value: sum / 20 });
-            }
-
-            price = close;
-            time += 300; // 5 min candles
-        }
-
-        candleSeries.setData(data);
-        volumeSeries.setData(volumeData);
-        maSeries.setData(maData);
-
-        // Resize Chart auto
+        // Resize Chart automatically
         new ResizeObserver(entries => {
             if (entries.length === 0 || entries[0].target !== chartContainer) return;
             const newRect = entries[0].contentRect;
             chart.applyOptions({ width: newRect.width, height: newRect.height });
         }).observe(chartContainer);
 
+        // --- 2. DONNÉES GLOBALES ---
+        let currentCandle = null;
+        let lastPrice = 0;
 
-        // --- SIMULATION ORDER BOOK (L2) ---
-        const obFeed = document.getElementById('ob-feed');
-        
-        function renderOrderBook() {
-            obFeed.innerHTML = '';
-            let currentPrice = data[data.length - 1].close;
-            
-            // Generates Sell Orders (Red)
-            for(let i=8; i>0; i--) {
-                let p = (currentPrice + i * 5).toFixed(1);
-                let size = (Math.random() * 2).toFixed(3);
-                let depth = Math.floor(Math.random() * 80); // % width
-                
-                obFeed.innerHTML += `
-                <div class="ob-row">
-                    <div class="depth-bar ask" style="width:${depth}%"></div>
-                    <div class="ob-cell color-sell">${p}</div>
-                    <div class="ob-cell">${size}</div>
-                    <div class="ob-cell" style="opacity:0.5">${(size*p/1000).toFixed(1)}K</div>
-                </div>`;
-            }
-            
-            // Spread divider
-            obFeed.innerHTML += `<div style="text-align:center; padding:5px; color:#58a6ff; font-weight:bold; border-top:1px solid #30363d; border-bottom:1px solid #30363d; background:#161b22;">${currentPrice.toFixed(1)}</div>`;
-
-            // Generates Buy Orders (Green)
-            for(let i=1; i<9; i++) {
-                let p = (currentPrice - i * 5).toFixed(1);
-                let size = (Math.random() * 3).toFixed(3);
-                let depth = Math.floor(Math.random() * 80); 
-                
-                obFeed.innerHTML += `
-                <div class="ob-row">
-                    <div class="depth-bar" style="width:${depth}%"></div>
-                    <div class="ob-cell color-buy">${p}</div>
-                    <div class="ob-cell">${size}</div>
-                    <div class="ob-cell" style="opacity:0.5">${(size*p/1000).toFixed(1)}K</div>
-                </div>`;
-            }
-        }
-        
-        // --- SIMULATION LOGS ---
-        const logFeed = document.getElementById('log-feed');
-        const logTypes = ['[INFO]', '[EXEC]', '[WARN]'];
-        const logMsgs = [
-            'Fetching depth snapshot...',
-            'Order limit placed at best bid',
-            'Latency spike detected: 45ms',
-            'Strategy rebalancing portfolio',
-            'WebSocket heartbeat received'
-        ];
-
-        function addLog() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
-            const type = logTypes[Math.floor(Math.random()*logTypes.length)];
-            const msg = logMsgs[Math.floor(Math.random()*logMsgs.length)];
-            
+        // --- 3. FONCTIONS UTILITAIRES ---
+        const log = (msg) => {
+            const feed = document.getElementById('logs');
             const div = document.createElement('div');
-            div.className = 'log-line';
-            div.innerHTML = `<span class="log-time">${timeStr}</span> <span class="log-type">${type}</span> <span>${msg}</span>`;
-            
-            logFeed.prepend(div); // Add to top
-            if(logFeed.children.length > 50) logFeed.removeChild(logFeed.lastChild);
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-ts">${new Date().toLocaleTimeString()}</span> ${msg}`;
+            feed.prepend(div);
+            if(feed.children.length > 50) feed.removeChild(feed.lastChild);
+        };
+
+        // --- 4. CHARGEMENT DE L'HISTORIQUE (REST API) ---
+        // On récupère les 1000 dernières minutes de BTC pour remplir le graphique
+        async function loadHistory() {
+            log("Fetching historical data from Binance...");
+            try {
+                const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1000');
+                const data = await res.json();
+                
+                const candles = data.map(d => ({
+                    time: d[0] / 1000,
+                    open: parseFloat(d[1]),
+                    high: parseFloat(d[2]),
+                    low: parseFloat(d[3]),
+                    close: parseFloat(d[4]),
+                }));
+
+                candleSeries.setData(candles);
+                currentCandle = candles[candles.length - 1];
+                lastPrice = currentCandle.close;
+                
+                log("History loaded. Initializing WebSocket...");
+                startWebSocket();
+            } catch (e) {
+                log("Error loading history: " + e);
+            }
         }
 
-        // --- LOOPS DE SIMULATION ---
-        renderOrderBook(); // Init
-        setInterval(renderOrderBook, 1500); // Refresh book
-        setInterval(addLog, 3000); // Add log
+        // --- 5. WEBSOCKET TEMPS RÉEL (Binance) ---
+        function startWebSocket() {
+            // On se connecte au flux "Trade" (transactions) et "Depth" (carnet d'ordres)
+            // btcusdt@kline_1m donne les mises à jour des bougies
+            // btcusdt@depth10 donne les 10 meilleures offres d'achat/vente
+            // btcusdt@ticker donne les stats 24h
+            const wsUrl = 'wss://stream.binance.com:9443/ws/btcusdt@kline_1m/btcusdt@depth10@100ms/btcusdt@ticker';
+            const ws = new WebSocket(wsUrl);
 
-        // Live Candle Update Simulation
-        setInterval(() => {
-            let lastCandle = data[data.length - 1];
-            let newPrice = lastCandle.close + (Math.random() - 0.5) * 20;
-            
-            // Update current candle
-            lastCandle.close = newPrice;
-            lastCandle.high = Math.max(lastCandle.high, newPrice);
-            lastCandle.low = Math.min(lastCandle.low, newPrice);
-            
-            candleSeries.update(lastCandle);
-            
-            // Update Title Dynamic
-            document.title = `${newPrice.toFixed(2)} BTC/USD | NEXUS`;
-        }, 200);
+            ws.onopen = () => {
+                log("WebSocket Connected: Receiving Live Stream");
+            };
+
+            ws.onmessage = (event) => {
+                const msg = JSON.parse(event.data);
+
+                // A. Mise à jour de la Bougie (Chart)
+                if (msg.e === 'kline') {
+                    const k = msg.k;
+                    const candle = {
+                        time: k.t / 1000,
+                        open: parseFloat(k.o),
+                        high: parseFloat(k.h),
+                        low: parseFloat(k.l),
+                        close: parseFloat(k.c),
+                    };
+                    candleSeries.update(candle);
+                    
+                    // Mise à jour de l'affichage du prix (Flash effect)
+                    const priceEl = document.getElementById('price-display');
+                    const currentPrice = parseFloat(k.c);
+                    priceEl.innerText = currentPrice.toFixed(2);
+                    priceEl.className = currentPrice >= lastPrice ? 'metric-value flash-up' : 'metric-value flash-down';
+                    lastPrice = currentPrice;
+                    
+                    // Titre de l'onglet
+                    document.title = `${currentPrice.toFixed(2)} BTC | NEXUS`;
+                }
+
+                // B. Mise à jour des Stats (Ticker)
+                if (msg.e === '24hrTicker') {
+                    const changeEl = document.getElementById('change-display');
+                    const chg = parseFloat(msg.P);
+                    changeEl.innerText = `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`;
+                    changeEl.style.color = chg >= 0 ? 'var(--accent-green-text)' : 'var(--accent-red-text)';
+                    
+                    document.getElementById('vol-display').innerText = Math.round(parseFloat(msg.v)).toLocaleString();
+                }
+
+                // C. Mise à jour du Carnet d'Ordres (Depth)
+                if (msg.lastUpdateId) {
+                    // C'est un message de profondeur
+                    updateOrderBook(msg.bids, msg.asks);
+                }
+            };
+
+            ws.onerror = (err) => log("WebSocket Error");
+            ws.onclose = () => log("WebSocket Disconnected");
+        }
+
+        // --- 6. GESTION DU CARNET D'ORDRES (DOM) ---
+        function updateOrderBook(bids, asks) {
+            // Asks (Vendeurs - Rouge - Haut)
+            const asksContainer = document.getElementById('asks-container');
+            asksContainer.innerHTML = '';
+            // On prend les 8 premiers, on reverse pour afficher le prix le plus bas en bas (proche du spread)
+            asks.slice(0, 8).forEach(ask => {
+                const price = parseFloat(ask[0]).toFixed(2);
+                const size = parseFloat(ask[1]).toFixed(4);
+                // Simulation visuelle de profondeur (random pour la démo car Binance ne donne pas le total volume ici facilement)
+                const depth = Math.min(100, size * 100); 
+                
+                const row = document.createElement('div');
+                row.className = 'ob-row';
+                row.innerHTML = `
+                    <div class="depth-bg depth-ask" style="width: ${depth}%"></div>
+                    <div class="ob-data" style="text-align:left; color:var(--accent-red-text)">${price}</div>
+                    <div class="ob-data">${size}</div>
+                `;
+                asksContainer.appendChild(row);
+            });
+
+            // Spread display
+            const bestAsk = parseFloat(asks[0][0]);
+            const bestBid = parseFloat(bids[0][0]);
+            const spread = (bestAsk - bestBid).toFixed(2);
+            document.getElementById('spread-display').innerText = `SPREAD: ${spread}`;
+
+            // Bids (Acheteurs - Vert - Bas)
+            const bidsContainer = document.getElementById('bids-container');
+            bidsContainer.innerHTML = '';
+            bids.slice(0, 8).forEach(bid => {
+                const price = parseFloat(bid[0]).toFixed(2);
+                const size = parseFloat(bid[1]).toFixed(4);
+                const depth = Math.min(100, size * 100);
+                
+                const row = document.createElement('div');
+                row.className = 'ob-row';
+                row.innerHTML = `
+                    <div class="depth-bg depth-bid" style="width: ${depth}%"></div>
+                    <div class="ob-data" style="text-align:left; color:var(--accent-green-text)">${price}</div>
+                    <div class="ob-data">${size}</div>
+                `;
+                bidsContainer.appendChild(row);
+            });
+        }
+
+        // START
+        loadHistory();
 
     </script>
 </body>
