@@ -1,13 +1,371 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Mon Tableau de Bord Alpha Vantage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS // QUANT TERMINAL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0b0e11;
+            --panel-bg: #151920;
+            --border-color: #2a2e39;
+            --text-primary: #e1e4e8;
+            --text-secondary: #8b949e;
+            --accent-green: #00f090;
+            --accent-red: #ff3333;
+            --accent-blue: #2962ff;
+            --font-ui: 'Inter', sans-serif;
+            --font-data: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            height: 50px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-family: var(--font-data);
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: var(--text-primary);
+        }
+        .logo span { color: var(--accent-blue); }
+
+        .system-status {
+            font-family: var(--font-data);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        /* --- Main Layout (Grid) --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            grid-template-rows: 150px 1fr 200px;
+            height: calc(100vh - 50px);
+            gap: 1px;
+            background-color: var(--border-color); /* Creates borders between cells */
+        }
+
+        .panel {
+            background-color: var(--bg-color);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            font-family: var(--font-data);
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- Specific Panels --- */
+        
+        /* KPI Cards (Top Row) */
+        .kpi-container {
+            grid-column: 1 / -1; /* Spans full width */
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background-color: var(--border-color);
+            height: 100%;
+        }
+        .kpi-card {
+            background-color: var(--bg-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .kpi-title { font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+        .kpi-value { font-family: var(--font-data); font-size: 24px; font-weight: 700; }
+        .text-green { color: var(--accent-green); }
+        .text-red { color: var(--accent-red); }
+
+        /* Sidebar (Left) */
+        .sidebar {
+            grid-row: 2 / -1;
+            grid-column: 1;
+            font-family: var(--font-data);
+            font-size: 13px;
+        }
+        .algo-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            opacity: 0.7;
+            cursor: pointer;
+        }
+        .algo-item:hover { opacity: 1; color: var(--accent-blue); }
+        .algo-active { opacity: 1; border-left: 2px solid var(--accent-blue); padding-left: 10px;}
+
+        /* Main Chart (Center) */
+        .chart-container {
+            grid-row: 2 / 3;
+            grid-column: 2 / 3;
+            position: relative;
+            background: var(--bg-color);
+        }
+        #chart { width: 100%; height: 100%; }
+
+        /* Order Book / Execution (Right) */
+        .order-book {
+            grid-row: 2 / 4;
+            grid-column: 3;
+            overflow-y: auto;
+        }
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            font-family: var(--font-data);
+            font-size: 11px;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Console / Logs (Bottom Center) */
+        .console-log {
+            grid-row: 3 / 4;
+            grid-column: 1 / 3;
+            font-family: var(--font-data);
+            font-size: 12px;
+            color: var(--text-secondary);
+            overflow-y: auto;
+        }
+        .log-entry { margin-bottom: 4px; }
+        .timestamp { color: #555; margin-right: 10px; }
+
+        @keyframes pulse {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 240, 144, 0.4); }
+            70% { opacity: 1; box-shadow: 0 0 0 6px rgba(0, 240, 144, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 240, 144, 0); }
+        }
+
+        /* Responsive Fix for mobile */
+        @media (max-width: 800px) {
+            .dashboard-grid { display: flex; flex-direction: column; height: auto; }
+            .chart-container { height: 400px; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Tableau de Bord de Trading</h1>
-    <p id="stock-price">Chargement des données...</p>
-    
-    <script src="script.js"></script>
+
+    <header>
+        <div class="logo">NEXUS <span>QUANT</span></div>
+        <div class="system-status">
+            SYSTEM LATENCY: 12ms
+            <div class="status-dot"></div>
+            ONLINE
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <span class="kpi-title">TOTAL PnL (YTD)</span>
+                <span class="kpi-value text-green">+24.8%</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">SHARPE RATIO</span>
+                <span class="kpi-value">2.45</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">MAX DRAWDOWN</span>
+                <span class="kpi-value text-red">-4.12%</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-title">ALPHA</span>
+                <span class="kpi-value text-green">1.82</span>
+            </div>
+        </div>
+
+        <div class="panel sidebar">
+            <div class="panel-header">ACTIVE STRATEGIES</div>
+            <div class="algo-item algo-active">
+                <span>MEAN_REV_01</span>
+                <span class="text-green">RUNNING</span>
+            </div>
+            <div class="algo-item">
+                <span>MOMENTUM_X</span>
+                <span class="text-secondary">PAUSED</span>
+            </div>
+            <div class="algo-item">
+                <span>ARB_TRIANGLE</span>
+                <span class="text-green">RUNNING</span>
+            </div>
+            <div class="algo-item">
+                <span>VOL_BREAKOUT</span>
+                <span class="text-red">STOPPED</span>
+            </div>
+            
+            <div class="panel-header" style="margin-top: 20px;">ASSET ALLOCATION</div>
+            <div class="algo-item"><span>EQUITIES</span> <span>45%</span></div>
+            <div class="algo-item"><span>CRYPTO</span> <span>30%</span></div>
+            <div class="algo-item"><span>FOREX</span> <span>15%</span></div>
+            <div class="algo-item"><span>CASH</span> <span>10%</span></div>
+        </div>
+
+        <div class="panel chart-container">
+            <div id="chart"></div>
+        </div>
+
+        <div class="panel order-book">
+            <div class="panel-header">
+                <span>L2 FEED</span>
+                <span>BTC/USD</span>
+            </div>
+            <div id="orderBookList">
+                </div>
+        </div>
+
+        <div class="panel console-log">
+            <div class="panel-header">ALGO EXECUTION LOGS</div>
+            <div id="logList">
+                <div class="log-entry"><span class="timestamp">10:42:01</span> [INFO] Connected to exchange websocket.</div>
+                <div class="log-entry"><span class="timestamp">10:42:02</span> [INFO] Strategy MEAN_REV_01 initialized.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. SETUP CHART (Lightweight Charts) ---
+        const chartContainer = document.getElementById('chart');
+        const chart = LightweightCharts.createChart(chartContainer, {
+            layout: {
+                background: { type: 'solid', color: '#0b0e11' },
+                textColor: '#8b949e',
+            },
+            grid: {
+                vertLines: { color: '#151920' },
+                horzLines: { color: '#151920' },
+            },
+            crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+            rightPriceScale: { borderColor: '#2a2e39' },
+            timeScale: { borderColor: '#2a2e39' },
+        });
+
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#00f090',
+            downColor: '#ff3333',
+            borderVisible: false,
+            wickUpColor: '#00f090',
+            wickDownColor: '#ff3333',
+        });
+
+        // --- 2. GENERATE FAKE DATA ---
+        // Creates a realistic looking random walk chart
+        let data = [];
+        let time = new Date(2023, 0, 1).getTime() / 1000;
+        let value = 25000;
+
+        for (let i = 0; i < 200; i++) {
+            let open = value + Math.random() * 200 - 100;
+            let high = open + Math.random() * 100;
+            let low = open - Math.random() * 100;
+            let close = Math.random() > 0.5 ? high - Math.random() * 50 : low + Math.random() * 50;
+            
+            value = close;
+            time += 86400; // 1 day
+            
+            data.push({ time: time, open: open, high: high, low: low, close: close });
+        }
+        
+        candleSeries.setData(data);
+
+        // Responsive chart resizing
+        new ResizeObserver(entries => {
+            if (entries.length === 0 || entries[0].target !== chartContainer) { return; }
+            const newRect = entries[0].contentRect;
+            chart.applyOptions({ width: newRect.width, height: newRect.height });
+        }).observe(chartContainer);
+
+
+        // --- 3. ANIMATION SIMULATION (Live Ticking) ---
+        
+        // Simulating Order Book Updates
+        const orderBookList = document.getElementById('orderBookList');
+        
+        function updateOrderBook() {
+            const price = (Math.random() * 1000 + 42000).toFixed(2);
+            const size = (Math.random() * 2).toFixed(4);
+            const type = Math.random() > 0.5 ? 'text-green' : 'text-red';
+            
+            const div = document.createElement('div');
+            div.className = 'table-row';
+            div.innerHTML = `<span>${price}</span> <span class="${type}">${size}</span>`;
+            
+            orderBookList.prepend(div);
+            if(orderBookList.children.length > 20) orderBookList.removeChild(orderBookList.lastChild);
+        }
+
+        // Simulating Log Updates
+        const logList = document.getElementById('logList');
+        const messages = [
+            "Calculating volatility index...",
+            "Order #4922 filled at 42105.50",
+            "Adjusting hedge ratio...",
+            "Heartbeat received: 12ms",
+            "Scanning for arbitrage opportunities..."
+        ];
+
+        function updateLog() {
+            const msg = messages[Math.floor(Math.random() * messages.length)];
+            const time = new Date().toLocaleTimeString('en-US', {hour12: false});
+            
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="timestamp">${time}</span> [INFO] ${msg}`;
+            
+            logList.prepend(div);
+            if(logList.children.length > 8) logList.removeChild(logList.lastChild);
+        }
+
+        // Run simulations
+        setInterval(updateOrderBook, 800);
+        setInterval(updateLog, 2500);
+
+    </script>
 </body>
 </html>
