@@ -1,5 +1,5 @@
 // Remplacez 'VOTRE_CLE_API' par la clé que vous avez obtenue d'Alpha Vantage
-const API_KEY = 'VOTRE_CLE_API';
+const API_KEY = '1D1VFRXR00DUHHQW';
 const SYMBOL = 'AAPL'; // Symbole boursier que vous voulez suivre
 const FUNCTION = 'TIME_SERIES_DAILY'; // Récupérer les données journalières
 const OUTPUT_SIZE = 'compact'; // 'compact' donne les 100 derniers jours, 'full' donne 20 ans
