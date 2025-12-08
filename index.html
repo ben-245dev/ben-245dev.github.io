@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS // SIMULATOR</title>
+    <title>NEXUS // PRO SIMULATOR</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
@@ -14,6 +14,7 @@
             --panel: #161b22;
             --border: #30363d;
             --text: #c9d1d9;
+            --text-dim: #6e7681;
             --green: #238636;
             --green-text: #3fb950;
             --red: #da3633;
@@ -28,88 +29,106 @@
 
         /* HEADER */
         header {
-            height: 50px; border-bottom: 1px solid var(--border); background: var(--panel);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+            height: 48px; border-bottom: 1px solid var(--border); background: var(--panel);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
         }
-        .logo { font-family: var(--font-mono); font-weight: 700; color: #fff; }
+        .logo { font-family: var(--font-mono); font-weight: 700; color: #fff; letter-spacing: -1px; }
         .logo span { color: var(--blue); }
-        .balance-area { font-family: var(--font-mono); font-size: 14px; }
-        .cash-label { color: var(--text); opacity: 0.7; font-size: 11px; margin-right: 5px; }
+        .balance-area { font-family: var(--font-mono); font-size: 13px; display: flex; gap: 10px; }
+        .cash-label { color: var(--text-dim); }
 
         /* GRID LAYOUT */
         .grid {
             display: grid;
-            grid-template-columns: 1fr 300px; /* Chart | Controls */
-            grid-template-rows: 1fr 200px;    /* Chart | Logs */
-            height: calc(100vh - 50px);
+            grid-template-columns: 1fr 280px; /* Chart | Controls */
+            grid-template-rows: 1fr 180px;    /* Chart | Logs */
+            height: calc(100vh - 48px);
             gap: 1px; background: var(--border);
         }
 
         /* CHART SECTION */
-        .chart-panel { grid-column: 1 / 2; grid-row: 1 / 2; background: var(--bg); position: relative; }
-        #chart { width: 100%; height: 100%; }
-        .ticker-info {
-            position: absolute; top: 15px; left: 20px; z-index: 10;
+        .chart-panel { grid-column: 1 / 2; grid-row: 1 / 2; background: var(--bg); position: relative; display: flex; flex-direction: column;}
+        /* IMPORTANT: Le conteneur du chart doit prendre toute la place */
+        #chart { width: 100%; height: 100%; flex: 1; }
+        
+        .ticker-overlay {
+            position: absolute; top: 15px; left: 15px; z-index: 10;
             font-family: var(--font-mono); pointer-events: none;
+            background: rgba(13, 17, 23, 0.7); padding: 5px 10px; border-radius: 4px;
         }
-        .current-price { font-size: 24px; font-weight: 700; color: #fff; }
+        .ticker-name { font-size: 11px; color: var(--text-dim); margin-bottom: 2px; }
+        .current-price { font-size: 20px; font-weight: 700; color: #fff; transition: color 0.3s; }
 
         /* CONTROLS (RIGHT) */
         .controls-panel {
             grid-column: 2 / 3; grid-row: 1 / -1; background: var(--panel);
-            display: flex; flex-direction: column; padding: 20px; border-left: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 15px; border-left: 1px solid var(--border);
         }
         
-        .stat-box { margin-bottom: 25px; background: var(--bg); padding: 15px; border: 1px solid var(--border); border-radius: 6px; }
-        .stat-label { font-size: 11px; color: #8b949e; margin-bottom: 5px; text-transform: uppercase; }
-        .stat-val { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
+        .stat-box { margin-bottom: 15px; background: var(--bg); padding: 12px; border: 1px solid var(--border); border-radius: 4px; }
+        .stat-label { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-val { font-family: var(--font-mono); font-size: 16px; font-weight: 600; }
+        
         .pnl-pos { color: var(--green-text); }
         .pnl-neg { color: var(--red-text); }
 
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
         button {
-            border: none; padding: 15px; border-radius: 6px; cursor: pointer;
-            font-family: var(--font-mono); font-weight: 700; font-size: 14px;
-            color: white; transition: opacity 0.2s;
+            border: none; padding: 12px; border-radius: 4px; cursor: pointer;
+            font-family: var(--font-mono); font-weight: 700; font-size: 12px;
+            color: white; transition: all 0.1s; text-transform: uppercase;
         }
-        button:hover { opacity: 0.9; }
-        button:active { transform: scale(0.98); }
+        button:hover { filter: brightness(1.1); }
+        button:active { transform: translateY(1px); }
         
-        .btn-buy { background: var(--green); }
-        .btn-sell { background: var(--red); }
-        .btn-close { background: var(--blue); grid-column: 1 / -1; margin-top: 10px; }
+        .btn-buy { background: var(--green); border-bottom: 2px solid #1a6328; }
+        .btn-sell { background: var(--red); border-bottom: 2px solid #a82a27; }
+        .btn-close { background: var(--blue); grid-column: 1 / -1; margin-top: 8px; border-bottom: 2px solid #3685e3; }
 
         /* LOGS (BOTTOM) */
         .logs-panel {
             grid-column: 1 / 2; grid-row: 2 / 3; background: var(--bg);
-            border-top: 1px solid var(--border); padding: 10px; font-family: var(--font-mono); font-size: 12px;
-            overflow-y: auto; display: flex; flex-direction: column-reverse; /* Newest at bottom visually */
+            border-top: 1px solid var(--border); padding: 8px 15px; font-family: var(--font-mono); font-size: 11px;
+            overflow-y: auto; display: flex; flex-direction: column-reverse;
         }
-        .log-line { margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 4px 0; }
-        .log-ts { color: var(--blue); margin-right: 10px; opacity: 0.7; }
-        
-        /* Mobile */
+        .panel-title { font-size: 10px; color: var(--text-dim); margin-bottom: 5px; position: sticky; top:0; background:var(--bg); }
+        .log-line { margin-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.03); padding: 3px 0; display: flex; }
+        .log-ts { color: var(--text-dim); margin-right: 12px; min-width: 60px; }
+        .log-msg { color: var(--text); }
+        .log-buy { color: var(--green-text); }
+        .log-sell { color: var(--red-text); }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed; top: 60px; right: 300px;
+            background: var(--blue); color: white; padding: 8px 16px; border-radius: 4px;
+            font-family: var(--font-mono); font-size: 12px;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
+        }
+
+        /* Responsive */
         @media (max-width: 800px) {
             .grid { display: flex; flex-direction: column; height: auto; }
-            .chart-panel { height: 350px; }
+            .chart-panel { height: 400px; }
             .logs-panel { height: 150px; }
+            #toast { right: 20px; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="logo">NEXUS <span>SIM</span></div>
+        <div class="logo">NEXUS // <span>PRO</span></div>
         <div class="balance-area">
-            <span class="cash-label">AVAILABLE CASH</span>
+            <span class="cash-label">EQUITY</span>
             <span id="cash-display">$10,000.00</span>
         </div>
     </header>
 
     <div class="grid">
         <div class="chart-panel">
-            <div class="ticker-info">
-                <div style="font-size:12px; color:#8b949e; margin-bottom:4px;">SYNTHETIC ASSET (NXS)</div>
+            <div class="ticker-overlay">
+                <div class="ticker-name">NXS / USD (SIM)</div>
                 <div class="current-price" id="price-header">100.00</div>
             </div>
             <div id="chart"></div>
@@ -118,12 +137,12 @@
         <div class="controls-panel">
             
             <div class="stat-box">
-                <div class="stat-label">Position Size</div>
+                <div class="stat-label">Position (Shares)</div>
                 <div class="stat-val" id="pos-size">0</div>
             </div>
 
             <div class="stat-box">
-                <div class="stat-label">Avg Entry Price</div>
+                <div class="stat-label">Avg Price</div>
                 <div class="stat-val" id="avg-entry">--</div>
             </div>
 
@@ -132,15 +151,15 @@
                 <div class="stat-val" id="unrealized-pnl">$0.00</div>
             </div>
 
-            <div class="stat-box" style="border-color: var(--blue);">
-                <div class="stat-label">Realized PnL (Total)</div>
-                <div class="stat-val" id="realized-pnl">$0.00</div>
+            <div class="stat-box" style="border-color: rgba(88, 166, 255, 0.3);">
+                <div class="stat-label">Realized PnL</div>
+                <div class="stat-val" id="realized-pnl" style="color: var(--blue);">$0.00</div>
             </div>
 
             <div class="btn-group">
                 <button class="btn-buy" onclick="trade('buy')">BUY</button>
                 <button class="btn-sell" onclick="trade('sell')">SELL</button>
-                <button class="btn-close" onclick="closeAll()">CLOSE POSITION</button>
+                <button class="btn-close" onclick="closeAll()">FLAT</button>
             </div>
         </div>
 
@@ -148,155 +167,165 @@
             </div>
     </div>
 
+    <div id="toast">Order Executed</div>
+
     <script>
-        // --- 1. CONFIGURATION DU CHART ---
+        // --- 1. CONFIGURATION DU GRAPHIQUE ---
         const chartContainer = document.getElementById('chart');
+        
         const chart = LightweightCharts.createChart(chartContainer, {
-            layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#8b949e' },
+            layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#6e7681' },
             grid: { vertLines: { color: '#161b22' }, horzLines: { color: '#161b22' } },
             crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-            rightPriceScale: { borderColor: '#30363d' },
+            rightPriceScale: { borderColor: '#30363d', scaleMargins: { top: 0.1, bottom: 0.2 } }, // Laisse place au volume
             timeScale: { borderColor: '#30363d', timeVisible: true, secondsVisible: true },
         });
 
+        // Série 1: Bougies
         const candleSeries = chart.addCandlestickSeries({
             upColor: '#238636', downColor: '#da3633',
             wickUpColor: '#238636', wickDownColor: '#da3633', borderVisible: false
         });
 
+        // Série 2: Volume (Histogramme en bas)
+        const volumeSeries = chart.addHistogramSeries({
+            priceFormat: { type: 'volume' },
+            priceScaleId: '', 
+            scaleMargins: { top: 0.8, bottom: 0 },
+        });
+
+        // Série 3: Moyenne Mobile (Ligne Bleue)
+        const maSeries = chart.addLineSeries({
+            color: '#58a6ff', lineWidth: 1, crosshairMarkerVisible: false
+        });
+
+        // Resize automatique
         new ResizeObserver(entries => {
             if (entries.length === 0 || entries[0].target !== chartContainer) return;
             const newRect = entries[0].contentRect;
             chart.applyOptions({ width: newRect.width, height: newRect.height });
         }).observe(chartContainer);
 
-        // --- 2. GAME STATE (Données du jeu) ---
+
+        // --- 2. MOTEUR DE SIMULATION ---
         let cash = 10000;
-        let position = 0; // Nombre d'actions
+        let position = 0;
         let avgEntryPrice = 0;
         let totalRealizedPnL = 0;
         
         let currentPrice = 100.00;
-        let lastCandle = null;
-        let lastTickTime = Math.floor(Date.now() / 1000);
+        let lastCandleTime = Math.floor(Date.now() / 1000);
+        let candleData = []; // Stocke l'historique pour la MA
 
-        // --- 3. GENERATEUR DE PRIX (Moteur Physique) ---
-        // On initialise avec 100 bougies passées pour que le graphique ne soit pas vide
-        let data = [];
-        let t = lastTickTime - (100 * 60);
-        let p = 100;
-        
-        for(let i=0; i<100; i++) {
-            let change = (Math.random() - 0.5) * 0.8; // Volatilité
-            let open = p;
-            let close = p + change;
-            let high = Math.max(open, close) + Math.random() * 0.5;
-            let low = Math.min(open, close) - Math.random() * 0.5;
+        // Initialisation de l'historique (100 bougies)
+        function initData() {
+            let t = lastCandleTime - (100 * 60);
+            let p = 100;
+            let histCandles = [];
+            let histVol = [];
+            let histMA = [];
+
+            for(let i=0; i<100; i++) {
+                let change = (Math.random() - 0.5) * 0.8;
+                let open = p;
+                let close = p + change;
+                let high = Math.max(open, close) + Math.random() * 0.4;
+                let low = Math.min(open, close) - Math.random() * 0.4;
+                
+                // Volume fictif
+                let vol = Math.random() * 100 + 50;
+                let color = close > open ? 'rgba(35, 134, 54, 0.5)' : 'rgba(218, 54, 51, 0.5)';
+                
+                let candle = { time: t, open, high, low, close };
+                histCandles.push(candle);
+                histVol.push({ time: t, value: vol, color: color });
+                
+                // Calcul simple MA (sur 20 periodes)
+                if(i > 20) {
+                    let sum = 0;
+                    for(let k=0; k<20; k++) sum += histCandles[i-k].close;
+                    histMA.push({ time: t, value: sum/20 });
+                }
+
+                p = close;
+                t += 60;
+            }
             
-            data.push({ time: t, open, high, low, close });
-            p = close;
-            t += 60;
+            candleData = histCandles;
+            candleSeries.setData(histCandles);
+            volumeSeries.setData(histVol);
+            maSeries.setData(histMA);
+            
+            currentPrice = p;
+            
+            // IMPORTANT: Force le graphique à s'adapter aux données
+            chart.timeScale().fitContent();
         }
-        candleSeries.setData(data);
-        lastCandle = data[data.length - 1];
-        currentPrice = lastCandle.close;
 
-        // Fonction qui tourne en boucle pour faire vivre le prix
+        initData(); // Lancer l'init
+
+        // Boucle de mise à jour (Temps Réel)
         setInterval(() => {
-            // Random Walk Algorithm
-            let volatility = 0.2; 
+            // Random Walk
+            let volatility = 0.15; 
             let change = (Math.random() - 0.5) * volatility;
-            
             currentPrice += change;
             
-            // Mise à jour de la bougie courante
             let now = Math.floor(Date.now() / 1000);
-            
-            // Si on change de minute, nouvelle bougie
+            let lastCandle = candleData[candleData.length - 1];
+
+            // Nouvelle bougie ou mise à jour ?
             if (now >= lastCandle.time + 60) {
-                lastCandle = {
+                // Nouvelle minute
+                let newCandle = {
                     time: Math.floor(now / 60) * 60,
-                    open: currentPrice,
-                    high: currentPrice,
-                    low: currentPrice,
-                    close: currentPrice
+                    open: currentPrice, high: currentPrice, low: currentPrice, close: currentPrice
                 };
+                candleData.push(newCandle);
+                candleSeries.update(newCandle);
+                
+                // Update volume (nouveau)
+                volumeSeries.update({ time: newCandle.time, value: Math.random()*50, color: 'rgba(88, 166, 255, 0.5)' });
+
             } else {
-                // Mise à jour bougie existante
+                // Update bougie existante
                 lastCandle.close = currentPrice;
                 lastCandle.high = Math.max(lastCandle.high, currentPrice);
                 lastCandle.low = Math.min(lastCandle.low, currentPrice);
+                candleSeries.update(lastCandle);
             }
-            
-            candleSeries.update(lastCandle);
+
             updateUI();
-        }, 200); // 5 ticks par seconde
+        }, 100); // Vitesse rapide (10 ticks/sec)
 
-        // --- 4. LOGIQUE DE TRADING ---
 
+        // --- 3. LOGIQUE TRADING ---
         function trade(type) {
-            const qty = 10; // On achète/vend par paquet de 10
-            const tradeValue = qty * currentPrice;
+            const qty = 10; 
+            const val = qty * currentPrice;
 
             if (type === 'buy') {
-                if (cash < tradeValue) {
-                    log("ERROR: Not enough cash!", true);
-                    return;
-                }
+                if (cash < val) return showToast("INSUFFICIENT FUNDS");
                 
-                // Calcul du nouveau prix d'entrée moyen
-                let oldTotal = position * avgEntryPrice;
-                let newTotal = oldTotal + tradeValue;
+                let oldCost = position * avgEntryPrice;
                 position += qty;
-                avgEntryPrice = newTotal / position;
-                
-                cash -= tradeValue;
-                log(`EXECUTED: BUY ${qty} @ ${currentPrice.toFixed(2)}`);
+                avgEntryPrice = (oldCost + val) / position;
+                cash -= val;
+                log(`BOUGHT ${qty} NXS @ ${currentPrice.toFixed(2)}`, 'buy');
+                showToast("BUY ORDER FILLED");
             } 
-            
-            if (type === 'sell') {
-                if (position < qty) { // On autorise le Short Selling dans ce jeu ? Non, restons simple.
-                    // Si on n'a pas d'actions, on Short (Vente à découvert)
-                    // Pour simplifier ici: Si position > 0 on vend, sinon on short
-                }
-
-                // Logique simplifiée: On vend ce qu'on a, ou on short
-                // Pour simplifier le code "realized PnL", on va dire qu'on ferme une partie de la position
-                
-                // --- SCENARIO 1 : J'ai des actions (LONG), je vends pour prendre profit ---
-                if (position > 0) {
-                    let amountToSell = Math.min(position, qty);
-                    
-                    // Calcul PnL sur cette partie
-                    let pnlOnTrade = (currentPrice - avgEntryPrice) * amountToSell;
-                    totalRealizedPnL += pnlOnTrade;
-                    cash += (amountToSell * currentPrice);
-                    position -= amountToSell;
-                    
-                    if (position === 0) avgEntryPrice = 0;
-                    
-                    log(`EXECUTED: SELL ${amountToSell} @ ${currentPrice.toFixed(2)} | PnL: $${pnlOnTrade.toFixed(2)}`);
-                } 
-                // --- SCENARIO 2 : Je n'ai rien (ou suis short), je vends à découvert ---
-                else {
-                    // Pour cet exemple simple, interdisons le short pour éviter la complexité mathématique
-                    // et forçons l'utilisateur à acheter d'abord.
-                     // Mais pour le fun, on peut simplement dire qu'on vend
-                     let pnlOnTrade = (currentPrice - avgEntryPrice) * qty;
-                     if(position < 0) {
-                         // Adding to short
-                         let oldTotal = Math.abs(position) * avgEntryPrice;
-                         let newTotal = oldTotal + tradeValue;
-                         position -= qty;
-                         avgEntryPrice = newTotal / Math.abs(position);
-                         cash += tradeValue; // Shorting adds cash (liability increases)
-                     } else {
-                         // Starting short
-                         position -= qty;
-                         avgEntryPrice = currentPrice;
-                         cash += tradeValue;
-                     }
-                     log(`EXECUTED: SHORT ${qty} @ ${currentPrice.toFixed(2)}`);
+            else if (type === 'sell') {
+                if (position >= qty) {
+                    // Vente de position
+                    let profit = (currentPrice - avgEntryPrice) * qty;
+                    totalRealizedPnL += profit;
+                    cash += (qty * currentPrice);
+                    position -= qty;
+                    if(position === 0) avgEntryPrice = 0;
+                    log(`SOLD ${qty} NXS @ ${currentPrice.toFixed(2)} | PnL: $${profit.toFixed(2)}`, 'sell');
+                    showToast("SELL ORDER FILLED");
+                } else {
+                    showToast("NO POSITION TO SELL");
                 }
             }
             updateUI();
@@ -304,65 +333,62 @@
 
         function closeAll() {
             if (position === 0) return;
-            
-            let pnl = 0;
-            if (position > 0) {
-                // Closing Long
-                pnl = (currentPrice - avgEntryPrice) * position;
-                cash += (position * currentPrice);
-            } else {
-                // Closing Short
-                pnl = (avgEntryPrice - currentPrice) * Math.abs(position);
-                cash -= (Math.abs(position) * currentPrice);
-            }
-            
-            totalRealizedPnL += pnl;
-            log(`POSITION CLOSED. Realized PnL: $${pnl.toFixed(2)}`);
+            let profit = (currentPrice - avgEntryPrice) * position;
+            totalRealizedPnL += profit;
+            cash += (position * currentPrice);
+            log(`CLOSED POSITION (${position} shares) | PnL: $${profit.toFixed(2)}`, profit >= 0 ? 'buy' : 'sell');
             
             position = 0;
             avgEntryPrice = 0;
+            showToast("POSITION CLOSED");
             updateUI();
         }
 
-        // --- 5. UI UPDATES ---
+        // --- 4. UI & UTILS ---
         function updateUI() {
-            // Header Price
-            document.getElementById('price-header').innerText = currentPrice.toFixed(2);
-            document.getElementById('cash-display').innerText = '$' + cash.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            // Price Tag
+            const pHeader = document.getElementById('price-header');
+            pHeader.innerText = currentPrice.toFixed(2);
+            pHeader.style.color = currentPrice >= candleData[candleData.length-1].open ? 'var(--green-text)' : 'var(--red-text)';
+
+            // Balance
+            let equity = cash + (position * currentPrice);
+            document.getElementById('cash-display').innerText = '$' + equity.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             // Stats
             document.getElementById('pos-size').innerText = position;
             document.getElementById('avg-entry').innerText = avgEntryPrice > 0 ? avgEntryPrice.toFixed(2) : '--';
 
-            // Unrealized PnL Calc
-            let unrealized = 0;
-            if (position !== 0) {
-                if (position > 0) unrealized = (currentPrice - avgEntryPrice) * position;
-                else unrealized = (avgEntryPrice - currentPrice) * Math.abs(position);
-            }
-            
-            const pnlEl = document.getElementById('unrealized-pnl');
-            pnlEl.innerText = '$' + unrealized.toFixed(2);
-            pnlEl.className = 'stat-val ' + (unrealized >= 0 ? 'pnl-pos' : 'pnl-neg');
+            // PnL
+            let unrealized = position > 0 ? (currentPrice - avgEntryPrice) * position : 0;
+            const upnlEl = document.getElementById('unrealized-pnl');
+            upnlEl.innerText = '$' + unrealized.toFixed(2);
+            upnlEl.className = 'stat-val ' + (unrealized >= 0 ? 'pnl-pos' : 'pnl-neg');
+            if(unrealized === 0) upnlEl.className = 'stat-val';
 
-            // Realized PnL
-            const realEl = document.getElementById('realized-pnl');
-            realEl.innerText = '$' + totalRealizedPnL.toFixed(2);
-            realEl.className = 'stat-val ' + (totalRealizedPnL >= 0 ? 'pnl-pos' : 'pnl-neg');
+            const rpnlEl = document.getElementById('realized-pnl');
+            rpnlEl.innerText = '$' + totalRealizedPnL.toFixed(2);
+            rpnlEl.className = 'stat-val ' + (totalRealizedPnL >= 0 ? 'pnl-pos' : 'pnl-neg');
         }
 
-        function log(msg, isError=false) {
+        function log(msg, type) {
             const box = document.getElementById('logs');
             const div = document.createElement('div');
             div.className = 'log-line';
-            div.style.color = isError ? '#da3633' : '#c9d1d9';
-            
             const time = new Date().toLocaleTimeString().split(' ')[0];
-            div.innerHTML = `<span class="log-ts">${time}</span> ${msg}`;
             
+            let colorClass = type === 'buy' ? 'log-buy' : (type === 'sell' ? 'log-sell' : 'log-msg');
+            
+            div.innerHTML = `<span class="log-ts">${time}</span> <span class="${colorClass}">${msg}</span>`;
             box.prepend(div);
         }
 
+        function showToast(text) {
+            const t = document.getElementById('toast');
+            t.innerText = text;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2000);
+        }
     </script>
 </body>
 </html>
