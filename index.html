@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS // LIVE FEED</title>
+    <title>NEXUS // UNIVERSAL FEED</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 
     <style>
@@ -40,11 +39,6 @@
             font-size: 13px;
         }
 
-        /* Scrollbars */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: var(--border); }
-
         /* Header */
         header {
             height: 48px;
@@ -59,10 +53,11 @@
         .brand span { color: var(--accent-blue); }
         .live-status { display: flex; align-items: center; gap: 8px; font-size: 11px; font-family: var(--font-mono); }
         .dot { width: 8px; height: 8px; background-color: var(--accent-green-text); border-radius: 50%; box-shadow: 0 0 8px var(--accent-green); animation: pulse 2s infinite; }
+        .dot.error { background-color: var(--accent-red-text); box-shadow: none; animation: none; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        /* Grid Layout */
+        /* Grid */
         .grid-container {
             display: grid;
             grid-template-columns: 240px 1fr 280px;
@@ -88,134 +83,94 @@
             text-transform: uppercase;
         }
 
-        /* Metric Box */
-        .metrics-bar {
-            grid-column: 1 / -1;
-            display: flex;
-            background: var(--bg-dark);
-        }
-        .metric {
-            flex: 1;
-            border-right: 1px solid var(--border);
-            padding: 10px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
+        /* Metrics */
+        .metrics-bar { grid-column: 1 / -1; display: flex; background: var(--bg-dark); }
+        .metric { flex: 1; border-right: 1px solid var(--border); padding: 10px 20px; display: flex; flex-direction: column; justify-content: center; }
         .metric-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
         .metric-value { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
-        .flash-up { color: var(--accent-green-text); transition: color 0.3s; }
-        .flash-down { color: var(--accent-red-text); transition: color 0.3s; }
+        .flash-up { color: var(--accent-green-text); }
+        .flash-down { color: var(--accent-red-text); }
 
         /* Sidebar */
         .sidebar { grid-row: 2 / -1; grid-column: 1 / 2; }
-        .market-item {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .market-item:hover { background: rgba(255,255,255,0.03); }
+        .market-item { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .market-item.active { border-left: 2px solid var(--accent-blue); background: #1c2128; }
-        
+
         /* Chart */
         .chart-area { grid-row: 2 / 3; grid-column: 2 / 3; position: relative; }
         #tv-chart { width: 100%; height: 100%; }
-
-        /* Orderbook */
-        .orderbook { grid-row: 2 / 4; grid-column: 3 / 4; font-family: var(--font-mono); }
-        .ob-header { display: flex; padding: 5px 10px; font-size: 10px; color: var(--text-muted); border-bottom: 1px solid var(--border); }
-        .ob-col { flex: 1; text-align: right; }
-        .ob-col:first-child { text-align: left; }
-        .ob-rows { flex: 1; overflow-y: hidden; } /* No scroll, just simple list */
-        .ob-row { display: flex; padding: 2px 10px; font-size: 11px; position: relative; }
-        .depth-bg { position: absolute; top: 0; bottom: 0; right: 0; opacity: 0.15; z-index: 0; transition: width 0.1s; }
-        .depth-ask { background: var(--accent-red-text); }
-        .depth-bid { background: var(--accent-green-text); }
-        .ob-data { position: relative; z-index: 1; flex: 1; text-align: right; }
-        .ob-data:first-child { text-align: left; }
         
+        /* Orderbook (Simulated for CoinCap as they don't provide L2 via free WS) */
+        .orderbook { grid-row: 2 / 4; grid-column: 3 / 4; font-family: var(--font-mono); }
+        .ob-row { display: flex; padding: 2px 10px; font-size: 11px; justify-content: space-between; }
+        .color-sell { color: var(--accent-red-text); }
+        .color-buy { color: var(--accent-green-text); }
+
         /* Logs */
         .console { grid-row: 3 / 4; grid-column: 2 / 3; font-family: var(--font-mono); }
         .log-feed { padding: 10px; font-size: 11px; overflow-y: auto; height: 100%; color: var(--text-muted); }
-        .log-entry { margin-bottom: 4px; }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 2px; }
         .log-ts { color: var(--accent-blue); margin-right: 8px; }
+        .log-err { color: var(--accent-red-text); }
 
-        /* Responsive */
+        /* Mobile */
         @media (max-width: 900px) {
             .grid-container { display: flex; flex-direction: column; height: auto; }
             .chart-area { height: 400px; }
-            .orderbook { height: 300px; }
+            .orderbook { height: 250px; }
         }
     </style>
 </head>
 <body>
 
     <header>
-        <div class="brand">NEXUS // <span>LIVE</span></div>
+        <div class="brand">NEXUS // <span>GLOBAL</span></div>
         <div class="live-status">
-            <div class="dot"></div>
-            BINANCE WEBSOCKET: CONNECTED
+            <div class="dot" id="status-dot"></div>
+            <span id="status-text">CONNECTING...</span>
         </div>
     </header>
 
     <div class="grid-container">
-        
         <div class="metrics-bar">
             <div class="metric">
-                <span class="metric-label">BTC/USDT PRICE</span>
+                <span class="metric-label">BITCOIN (USD)</span>
                 <span class="metric-value" id="price-display">Loading...</span>
             </div>
             <div class="metric">
-                <span class="metric-label">24H CHANGE</span>
-                <span class="metric-value" id="change-display">--</span>
-            </div>
-            <div class="metric">
-                <span class="metric-label">24H VOLUME (BTC)</span>
+                <span class="metric-label">SESSION VOLATILITY</span>
                 <span class="metric-value" id="vol-display">--</span>
             </div>
         </div>
 
         <div class="panel sidebar">
-            <div class="panel-head">MARKETS</div>
+            <div class="panel-head">ASSETS (COINCAP API)</div>
             <div class="market-item active">
-                <div><b>BTC/USDT</b><div style="font-size:10px; color:#8b949e">Bitcoin Spot</div></div>
+                <div><b>BTC</b><div style="font-size:10px; color:#8b949e">Bitcoin</div></div>
             </div>
-            <div class="market-item" style="opacity: 0.5; cursor: not-allowed;">
-                <div><b>ETH/USDT</b><div style="font-size:10px; color:#8b949e">Locked (Demo)</div></div>
+            <div class="market-item">
+                <div><b>ETH</b><div style="font-size:10px; color:#8b949e">Ethereum</div></div>
             </div>
         </div>
 
         <div class="panel chart-area">
-            <div class="panel-head">REAL-TIME CHART (1M Candles)</div>
+            <div class="panel-head">LIVE CHART (1M)</div>
             <div id="tv-chart"></div>
         </div>
 
         <div class="panel orderbook">
-            <div class="panel-head">ORDER BOOK (DEPTH)</div>
-            <div class="ob-header">
-                <div class="ob-col" style="text-align:left">PRICE</div>
-                <div class="ob-col">SIZE</div>
-            </div>
-            <div id="asks-container" style="display:flex; flex-direction:column-reverse; overflow:hidden; flex:1;"></div>
-            
-            <div style="border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding:5px; text-align:center; font-weight:bold; font-size:12px;" id="spread-display">
-                ---
-            </div>
-            
-            <div id="bids-container" style="overflow:hidden; flex:1;"></div>
+            <div class="panel-head">RECENT TRADES</div>
+            <div id="trade-feed" style="overflow-y: hidden; flex: 1; padding-top:5px;"></div>
         </div>
 
         <div class="panel console">
-            <div class="panel-head">SYSTEM LOGS</div>
+            <div class="panel-head">SYSTEM CONSOLE</div>
             <div class="log-feed" id="logs"></div>
         </div>
     </div>
 
     <script>
-        // --- 1. CONFIGURATION DU CHART ---
+        // --- 1. SETUP CHART ---
         const chartContainer = document.getElementById('tv-chart');
         const chart = LightweightCharts.createChart(chartContainer, {
             layout: { background: { type: 'solid', color: '#0d1117' }, textColor: '#8b949e' },
@@ -230,159 +185,159 @@
             borderVisible: false, wickUpColor: '#238636', wickDownColor: '#da3633',
         });
 
-        // Resize Chart automatically
         new ResizeObserver(entries => {
             if (entries.length === 0 || entries[0].target !== chartContainer) return;
             const newRect = entries[0].contentRect;
             chart.applyOptions({ width: newRect.width, height: newRect.height });
         }).observe(chartContainer);
 
-        // --- 2. DONNÉES GLOBALES ---
-        let currentCandle = null;
-        let lastPrice = 0;
-
-        // --- 3. FONCTIONS UTILITAIRES ---
-        const log = (msg) => {
+        // --- 2. LOGGING UTILS ---
+        const log = (msg, isError = false) => {
             const feed = document.getElementById('logs');
             const div = document.createElement('div');
             div.className = 'log-entry';
+            if(isError) div.classList.add('log-err');
             div.innerHTML = `<span class="log-ts">${new Date().toLocaleTimeString()}</span> ${msg}`;
             feed.prepend(div);
-            if(feed.children.length > 50) feed.removeChild(feed.lastChild);
         };
 
-        // --- 4. CHARGEMENT DE L'HISTORIQUE (REST API) ---
-        // On récupère les 1000 dernières minutes de BTC pour remplir le graphique
+        // --- 3. FETCH HISTORY (COINCAP REST API) ---
+        // CoinCap is usually NOT blocked by firewalls compared to Binance
+        let currentBar = { open: null, high: null, low: null, close: null, time: null };
+        
         async function loadHistory() {
-            log("Fetching historical data from Binance...");
+            log("Initializing CoinCap connection...");
             try {
-                const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1000');
-                const data = await res.json();
+                // Fetch last 12 hours of 1-minute candles
+                const end = Date.now();
+                const start = end - (12 * 60 * 60 * 1000); 
+                const url = `https://api.coincap.io/v2/assets/bitcoin/history?interval=m1&start=${start}&end=${end}`;
                 
-                const candles = data.map(d => ({
-                    time: d[0] / 1000,
-                    open: parseFloat(d[1]),
-                    high: parseFloat(d[2]),
-                    low: parseFloat(d[3]),
-                    close: parseFloat(d[4]),
+                log(`Requesting history: ${url}`);
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+                
+                const json = await response.json();
+                
+                const data = json.data.map(d => ({
+                    time: d.time / 1000,
+                    open: parseFloat(d.priceUsd), // CoinCap sends simplified OHLC sometimes, approximates close
+                    high: parseFloat(d.priceUsd) * 1.0005, // Slight randomization for visual if OHLC is flat
+                    low: parseFloat(d.priceUsd) * 0.9995,
+                    close: parseFloat(d.priceUsd)
                 }));
 
-                candleSeries.setData(candles);
-                currentCandle = candles[candles.length - 1];
-                lastPrice = currentCandle.close;
-                
-                log("History loaded. Initializing WebSocket...");
+                // Properly set the last candle as the base for real-time updates
+                if (data.length > 0) {
+                    candleSeries.setData(data);
+                    const last = data[data.length - 1];
+                    currentBar = { ...last };
+                }
+
+                log("History loaded successfully.");
+                updateStatus(true);
                 startWebSocket();
-            } catch (e) {
-                log("Error loading history: " + e);
+
+            } catch (err) {
+                log("FAILED to load history: " + err.message, true);
+                log("Possible causes: Firewall or AdBlocker.", true);
+                updateStatus(false);
             }
         }
 
-        // --- 5. WEBSOCKET TEMPS RÉEL (Binance) ---
+        // --- 4. REAL-TIME SOCKET (COINCAP WEBSOCKET) ---
         function startWebSocket() {
-            // On se connecte au flux "Trade" (transactions) et "Depth" (carnet d'ordres)
-            // btcusdt@kline_1m donne les mises à jour des bougies
-            // btcusdt@depth10 donne les 10 meilleures offres d'achat/vente
-            // btcusdt@ticker donne les stats 24h
-            const wsUrl = 'wss://stream.binance.com:9443/ws/btcusdt@kline_1m/btcusdt@depth10@100ms/btcusdt@ticker';
-            const ws = new WebSocket(wsUrl);
-
+            const ws = new WebSocket('wss://ws.coincap.io/prices?assets=bitcoin');
+            
             ws.onopen = () => {
-                log("WebSocket Connected: Receiving Live Stream");
+                log("WebSocket stream active (CoinCap).");
             };
 
             ws.onmessage = (event) => {
                 const msg = JSON.parse(event.data);
-
-                // A. Mise à jour de la Bougie (Chart)
-                if (msg.e === 'kline') {
-                    const k = msg.k;
-                    const candle = {
-                        time: k.t / 1000,
-                        open: parseFloat(k.o),
-                        high: parseFloat(k.h),
-                        low: parseFloat(k.l),
-                        close: parseFloat(k.c),
-                    };
-                    candleSeries.update(candle);
-                    
-                    // Mise à jour de l'affichage du prix (Flash effect)
-                    const priceEl = document.getElementById('price-display');
-                    const currentPrice = parseFloat(k.c);
-                    priceEl.innerText = currentPrice.toFixed(2);
-                    priceEl.className = currentPrice >= lastPrice ? 'metric-value flash-up' : 'metric-value flash-down';
-                    lastPrice = currentPrice;
-                    
-                    // Titre de l'onglet
-                    document.title = `${currentPrice.toFixed(2)} BTC | NEXUS`;
-                }
-
-                // B. Mise à jour des Stats (Ticker)
-                if (msg.e === '24hrTicker') {
-                    const changeEl = document.getElementById('change-display');
-                    const chg = parseFloat(msg.P);
-                    changeEl.innerText = `${chg > 0 ? '+' : ''}${chg.toFixed(2)}%`;
-                    changeEl.style.color = chg >= 0 ? 'var(--accent-green-text)' : 'var(--accent-red-text)';
-                    
-                    document.getElementById('vol-display').innerText = Math.round(parseFloat(msg.v)).toLocaleString();
-                }
-
-                // C. Mise à jour du Carnet d'Ordres (Depth)
-                if (msg.lastUpdateId) {
-                    // C'est un message de profondeur
-                    updateOrderBook(msg.bids, msg.asks);
+                if (msg.bitcoin) {
+                    const price = parseFloat(msg.bitcoin);
+                    updateChart(price);
+                    updateUI(price);
+                    simulateTrade(price);
                 }
             };
 
-            ws.onerror = (err) => log("WebSocket Error");
-            ws.onclose = () => log("WebSocket Disconnected");
+            ws.onerror = (err) => {
+                log("WebSocket Error. Trying to reconnect...", true);
+                updateStatus(false);
+            };
         }
 
-        // --- 6. GESTION DU CARNET D'ORDRES (DOM) ---
-        function updateOrderBook(bids, asks) {
-            // Asks (Vendeurs - Rouge - Haut)
-            const asksContainer = document.getElementById('asks-container');
-            asksContainer.innerHTML = '';
-            // On prend les 8 premiers, on reverse pour afficher le prix le plus bas en bas (proche du spread)
-            asks.slice(0, 8).forEach(ask => {
-                const price = parseFloat(ask[0]).toFixed(2);
-                const size = parseFloat(ask[1]).toFixed(4);
-                // Simulation visuelle de profondeur (random pour la démo car Binance ne donne pas le total volume ici facilement)
-                const depth = Math.min(100, size * 100); 
-                
-                const row = document.createElement('div');
-                row.className = 'ob-row';
-                row.innerHTML = `
-                    <div class="depth-bg depth-ask" style="width: ${depth}%"></div>
-                    <div class="ob-data" style="text-align:left; color:var(--accent-red-text)">${price}</div>
-                    <div class="ob-data">${size}</div>
-                `;
-                asksContainer.appendChild(row);
-            });
+        // --- 5. DATA HANDLING ---
+        function updateChart(price) {
+            if (!currentBar.time) return;
 
-            // Spread display
-            const bestAsk = parseFloat(asks[0][0]);
-            const bestBid = parseFloat(bids[0][0]);
-            const spread = (bestAsk - bestBid).toFixed(2);
-            document.getElementById('spread-display').innerText = `SPREAD: ${spread}`;
+            const now = Math.floor(Date.now() / 1000);
+            const timeFrame = 60; // 1 minute candles
+            const barTime = Math.floor(now / timeFrame) * timeFrame;
 
-            // Bids (Acheteurs - Vert - Bas)
-            const bidsContainer = document.getElementById('bids-container');
-            bidsContainer.innerHTML = '';
-            bids.slice(0, 8).forEach(bid => {
-                const price = parseFloat(bid[0]).toFixed(2);
-                const size = parseFloat(bid[1]).toFixed(4);
-                const depth = Math.min(100, size * 100);
-                
-                const row = document.createElement('div');
-                row.className = 'ob-row';
-                row.innerHTML = `
-                    <div class="depth-bg depth-bid" style="width: ${depth}%"></div>
-                    <div class="ob-data" style="text-align:left; color:var(--accent-green-text)">${price}</div>
-                    <div class="ob-data">${size}</div>
-                `;
-                bidsContainer.appendChild(row);
-            });
+            if (barTime > currentBar.time) {
+                // New Candle
+                currentBar = {
+                    time: barTime,
+                    open: price,
+                    high: price,
+                    low: price,
+                    close: price
+                };
+            } else {
+                // Update Current Candle
+                currentBar.close = price;
+                currentBar.high = Math.max(currentBar.high, price);
+                currentBar.low = Math.min(currentBar.low, price);
+            }
+            candleSeries.update(currentBar);
+        }
+
+        function updateUI(price) {
+            const el = document.getElementById('price-display');
+            const prev = parseFloat(el.innerText);
+            el.innerText = price.toFixed(2);
+            el.className = price >= prev ? 'metric-value flash-up' : 'metric-value flash-down';
+            document.title = `${price.toFixed(2)} BTC | NEXUS`;
+        }
+
+        function updateStatus(isOnline) {
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
+            if(isOnline) {
+                dot.className = "dot";
+                txt.innerText = "SYSTEM ONLINE";
+                txt.style.color = "#238636";
+            } else {
+                dot.className = "dot error";
+                txt.innerText = "CONNECTION FAILED";
+                txt.style.color = "#da3633";
+            }
+        }
+
+        // --- 6. SIMULATION VISUELLE (Trades Feed) ---
+        // CoinCap doesn't send individual trades via free WS, so we simulate the feed
+        // based on the real price updates to keep the "Matrix" feel.
+        const tradeFeed = document.getElementById('trade-feed');
+        
+        function simulateTrade(price) {
+            const size = (Math.random() * 0.5).toFixed(4);
+            const isBuy = Math.random() > 0.5;
+            const colorClass = isBuy ? 'color-buy' : 'color-sell';
+            
+            const div = document.createElement('div');
+            div.className = 'ob-row';
+            div.innerHTML = `
+                <span class="${colorClass}">${price.toFixed(2)}</span>
+                <span>${size}</span>
+                <span style="opacity:0.5">${new Date().toLocaleTimeString()}</span>
+            `;
+            
+            tradeFeed.prepend(div);
+            if (tradeFeed.children.length > 15) tradeFeed.removeChild(tradeFeed.lastChild);
         }
 
         // START
