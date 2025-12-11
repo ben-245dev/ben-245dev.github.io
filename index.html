@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billard Circulaire - Collisions Élastiques</title>
+    <style>
+        /* Styles pour centrer le conteneur du cercle sur la page */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            overflow: hidden; /* Empêche les barres de défilement */
+        }
+
+        /* Le grand cercle (la zone de jeu) */
+        #container {
+            position: relative;
+            background-color: #333; /* Fond sombre pour le contraste */
+            border: 4px solid #fff; /* Bordure blanche épaisse */
+            border-radius: 50%; /* Crée la forme circulaire */
+            /* La taille réelle est définie par JavaScript */
+        }
+
+        /* Styles de base pour les billes */
+        .ball {
+            position: absolute;
+            border-radius: 50%;
+            background-color: #ff6347; /* Tomate */
+            /* La couleur et la taille sont définies par JavaScript/Inline */
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    </div>
+
+<script>
+    // =========================================================
+    // PARAMÈTRES MODIFIABLES
+    // =========================================================
+    const CONTAINER_RADIUS = 300; // Rayon du grand cercle en pixels
+    const NUMBER_OF_BALLS = 25;    // Nombre de petites boules
+    const MIN_BALL_RADIUS = 5;    // Rayon minimum des boules
+    const MAX_BALL_RADIUS = 15;   // Rayon maximum des boules
+    const MAX_SPEED = 2;          // Vitesse maximale initiale (pixels par frame)
+
+    // =========================================================
+    // INITIALISATION DU CONTENEUR ET DES VARIABLES GLOBALES
+    // =========================================================
+    const container = document.getElementById('container');
+    const containerDiameter = CONTAINER_RADIUS * 2;
+
+    // Appliquer la taille et la forme au conteneur
+    container.style.width = `${containerDiameter}px`;
+    container.style.height = `${containerDiameter}px`;
+    
+    // Position du centre du conteneur (utilisé pour les calculs de collision)
+    const center = {
+        x: CONTAINER_RADIUS,
+        y: CONTAINER_RADIUS
+    };
+
+    let balls = [];
+    let animationFrameId;
+
+    // Classe représentant une seule bille
+    class Ball {
+        constructor(id, x, y, radius, dx, dy, color) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.mass = radius * radius; // Utiliser le rayon carré comme proxy pour la masse
+            this.dx = dx;
+            this.dy = dy;
+            this.color = color;
+            
+            // Création de l'élément DOM
+            this.element = document.createElement('div');
+            this.element.classList.add('ball');
+            this.element.style.width = `${this.radius * 2}px`;
+            this.element.style.height = `${this.radius * 2}px`;
+            this.element.style.backgroundColor = this.color;
+            container.appendChild(this.element);
+        }
+
+        // Met à jour la position dans le DOM
+        updatePosition() {
+            // L'offset de -radius est nécessaire pour centrer la bille
+            this.element.style.transform = `translate(${this.x - this.radius}px, ${this.y - this.radius}px)`;
+        }
+
+        // Déplace la bille selon sa vitesse (dx, dy)
+        move() {
+            this.x += this.dx;
+            this.y += this.dy;
+        }
+    }
+
+    // =========================================================
+    // FONCTIONS UTILITAIRES
+    // =========================================================
+
+    /**
+     * Génère un nombre aléatoire dans une plage spécifiée.
+     */
+    function getRandom(min, max) {
+        return Math.random() * (max - min) + min;
+    }
+
+    /**
+     * Génère une couleur hexadécimale aléatoire.
+     */
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    /**
+     * Initialise toutes les billes à des positions et vitesses aléatoires
+     * sans chevauchement initial.
+     */
+    function initializeBalls() {
+        for (let i = 0; i < NUMBER_OF_BALLS; i++) {
+            let newBall;
+            let overlapping;
+            const radius = getRandom(MIN_BALL_RADIUS, MAX_BALL_RADIUS);
+            
+            // Tente de trouver une position sans chevauchement
+            do {
+                overlapping = false;
+                // Position aléatoire dans le conteneur, en évitant le bord
+                const maxCoord = CONTAINER_RADIUS - radius;
+                const x = getRandom(radius, maxCoord * 2); 
+                const y = getRandom(radius, maxCoord * 2);
+
+                // Vitesse aléatoire
+                const dx = getRandom(-MAX_SPEED, MAX_SPEED);
+                const dy = getRandom(-MAX_SPEED, MAX_SPEED);
+
+                newBall = { x, y, radius, mass: radius * radius, dx, dy };
+
+                // Vérifie le chevauchement avec les billes déjà créées
+                for (const existingBall of balls) {
+                    const distSq = (newBall.x - existingBall.x) ** 2 + (newBall.y - existingBall.y) ** 2;
+                    const minDstSq = (newBall.radius + existingBall.radius) ** 2;
+                    if (distSq < minDstSq) {
+                        overlapping = true;
+                        break;
+                    }
+                }
+                
+                // Vérifie si la bille n'est pas trop proche du mur
+                const distToCenter = Math.sqrt((x - center.x) ** 2 + (y - center.y) ** 2);
+                if (distToCenter + radius > CONTAINER_RADIUS) {
+                    overlapping = true;
+                }
+
+            } while (overlapping);
+
+            // Ajoute la bille si une position valide est trouvée
+            const ballInstance = new Ball(i, newBall.x, newBall.y, newBall.radius, newBall.dx, newBall.dy, getRandomColor());
+            balls.push(ballInstance);
+            ballInstance.updatePosition();
+        }
+    }
+
+    // =========================================================
+    // GESTION DES COLLISIONS
+    // =========================================================
+
+    /**
+     * Gère la collision entre la bille et la paroi circulaire.
+     * Utilise la réflexion vectorielle pour un rebond précis.
+     */
+    function handleWallCollision(ball) {
+        // Vecteur position de la bille par rapport au centre du conteneur
+        const posToCenter_x = ball.x - center.x;
+        const posToCenter_y = ball.y - center.y;
+        
+        // Distance du centre de la bille au centre du conteneur
+        const dist = Math.sqrt(posToCenter_x ** 2 + posToCenter_y ** 2);
+        
+        // La distance maximale autorisée pour le centre de la bille
+        const maxDist = CONTAINER_RADIUS - ball.radius;
+
+        // Vérifie si la bille est en dehors de la limite ou la touche
+        if (dist > maxDist) {
+            // 1. Déplace la bille exactement sur le bord pour éviter de coller
+            // Normalisation du vecteur position (vecteur normal à la paroi au point de collision)
+            const normal_x = posToCenter_x / dist;
+            const normal_y = posToCenter_y / dist;
+            
+            // Repositionnement (poussée hors du mur)
+            ball.x = center.x + normal_x * maxDist;
+            ball.y = center.y + normal_y * maxDist;
+
+            // 2. Calcul du rebond (Réflexion vectorielle)
+            
+            // Vecteur vitesse
+            const velocity_x = ball.dx;
+            const velocity_y = ball.dy;
+            
+            // Produit scalaire de la vitesse et de la normale (v . n)
+            const dotProduct = velocity_x * normal_x + velocity_y * normal_y;
+            
+            // Calcul de la nouvelle vitesse (v' = v - 2 * (v . n) * n)
+            ball.dx = velocity_x - 2 * dotProduct * normal_x;
+            ball.dy = velocity_y - 2 * dotProduct * normal_y;
+        }
+    }
+
+    /**
+     * Gère la collision élastique entre deux billes.
+     * Utilise la conservation de la quantité de mouvement et de l'énergie cinétique.
+     * Référence : https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
+     */
+    function handleBallCollision(ball1, ball2) {
+        const dx = ball2.x - ball1.x;
+        const dy = ball2.y - ball1.y;
+        const distSq = dx * dx + dy * dy;
+        const minDstSq = (ball1.radius + ball2.radius) ** 2;
+
+        if (distSq < minDstSq && distSq !== 0) {
+            // 1. Vecteurs et distances
+            const dist = Math.sqrt(distSq);
+            
+            // Vecteur distance unitaire (normale à la collision)
+            const normal_x = dx / dist;
+            const normal_y = dy / dist;
+            
+            // Vecteur tangentiel (perpendiculaire à la normale)
+            const tangent_x = -normal_y;
+            const tangent_y = normal_x;
+
+            // 2. Repositionnement (éviter le chevauchement)
+            const overlap = (ball1.radius + ball2.radius) - dist;
+            // Déplace la première bille dans la direction opposée à la normale (moitié du chevauchement)
+            ball1.x -= normal_x * (overlap / 2);
+            ball1.y -= normal_y * (overlap / 2);
+            // Déplace la seconde bille dans la direction de la normale (moitié du chevauchement)
+            ball2.x += normal_x * (overlap / 2);
+            ball2.y += normal_y * (overlap / 2);
+
+            // 3. Décomposition des vitesses
+            // Produit scalaire de la vitesse et de la tangente (v . t) -> composante tangentielle de la vitesse (ne change pas)
+            const v1t = ball1.dx * tangent_x + ball1.dy * tangent_y;
+            const v2t = ball2.dx * tangent_x + ball2.dy * tangent_y;
+
+            // Produit scalaire de la vitesse et de la normale (v . n) -> composante normale de la vitesse (change lors de la collision)
+            const v1n = ball1.dx * normal_x + ball1.dy * normal_y;
+            const v2n = ball2.dx * normal_x + ball2.dy * normal_y;
+
+            // 4. Nouvelles vitesses normales (1D élastique)
+            // Conservation de la quantité de mouvement simple
+            const v1n_prime = (v1n * (ball1.mass - ball2.mass) + 2 * ball2.mass * v2n) / (ball1.mass + ball2.mass);
+            const v2n_prime = (v2n * (ball2.mass - ball1.mass) + 2 * ball1.mass * v1n) / (ball1.mass + ball2.mass);
+
+            // 5. Recomposition des vitesses
+            // Vitesse finale = (v_normale_prime * normale) + (v_tangentielle * tangente)
+            ball1.dx = v1n_prime * normal_x + v1t * tangent_x;
+            ball1.dy = v1n_prime * normal_y + v1t * tangent_y;
+            ball2.dx = v2n_prime * normal_x + v2t * tangent_x;
+            ball2.dy = v2n_prime * normal_y + v2t * tangent_y;
+        }
+    }
+
+
+    // =========================================================
+    // BOUCLE D'ANIMATION
+    // =========================================================
+
+    /**
+     * La fonction principale appelée à chaque frame d'animation.
+     */
+    function animate() {
+        // Mettre à jour la position de chaque bille et gérer les collisions avec le mur
+        for (let i = 0; i < balls.length; i++) {
+            const ball = balls[i];
+            
+            // Mouvement de la bille
+            ball.move();
+
+            // Gestion de la collision avec le mur
+            handleWallCollision(ball);
+
+            // Gestion des collisions entre billes
+            for (let j = i + 1; j < balls.length; j++) {
+                handleBallCollision(ball, balls[j]);
+            }
+            
+            // Mettre à jour la position dans le DOM
+            ball.updatePosition();
+        }
+
+        // Demande la prochaine image d'animation
+        animationFrameId = requestAnimationFrame(animate);
+    }
+
+    // =========================================================
+    // DÉMARRAGE DE L'APPLICATION
+    // =========================================================
+
+    initializeBalls();
+    animate();
+
+</script>
+
+</body>
+</html>
